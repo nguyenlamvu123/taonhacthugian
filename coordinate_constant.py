@@ -8,6 +8,32 @@ def sample_length2num_tokens(sample_length=30):
     "sample_length: seconds"
     return sample_length * model.config.audio_encoder.frame_rate + 3
 
+
+def apply_nltk(func):  # @apply_nltk
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        silence = np.zeros(int(0.25 * sampling_rate))
+        assert 'thoigian' in kwargs
+        thoigian = kwargs['thoigian']
+
+        pieces = []
+        while thoigian > 0:
+            thoigian_ = thoigian - sample_length
+            if thoigian_ < 0:
+                kwargs['thoigian'] = thoigian
+                audio_values = func(**kwargs)  # model.generate(**inputs.to(device))
+            else:
+                kwargs['thoigian'] = sample_length
+                audio_values = func(**kwargs)  # model.generate(**inputs.to(device))
+            thoigian = thoigian_
+            # pieces += [audio_values, silence.copy()]
+            dat = audio_values[0, 0].cpu().numpy()
+            if debug:
+                scipy.io.wavfile.write(f"elem_{len(pieces)}.wav", rate=sampling_rate, data=dat)
+            pieces += [dat, silence.copy()]
+        return np.concatenate(pieces)
+    return wrapper
+
 pret_loca = os.path.join(os.path.dirname(__file__), 'pret')
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 sample_length = 30  # seconds

@@ -1,6 +1,6 @@
 import scipy
 from coordinate_constant import (
-    sample_length2num_tokens,
+    apply_nltk, sample_length2num_tokens,
     processor, device, model, g_scale, debug, sampling_rate, sample_length,
 )
 
@@ -11,12 +11,14 @@ def configgg(model):
     return model
 
 
+@apply_nltk
 def Py_Transformer_uncondition(num_tokens=256):
     unconditional_inputs = model.get_unconditional_inputs(num_samples=1)
     audio_values = model.generate(**unconditional_inputs, do_sample=True, max_new_tokens=num_tokens)
     return audio_values
 
 
+@apply_nltk
 def Py_Transformer(input_text, g_scale=3, **kwargs):
     num_tokens = sample_length2num_tokens(kwargs['thoigian'])
     inputs = processor(
@@ -42,7 +44,7 @@ if __name__ == '__main__':
             # (["A serene and peaceful piano piece", ], "sapp.wav", ),
     ):
         audio_values = Py_Transformer(
-            input_text=input_text[0], g_scale=g_scale, thoigian=30
+            input_text=input_text[0], g_scale=g_scale, thoigian=sample_length + 29
         )
         if debug:
             print('###################', audio_values.shape)  # it will be `torch.Size([n, 1, 960000])` with n=len(input_text[0])
@@ -50,4 +52,4 @@ if __name__ == '__main__':
 
         # scipy.io.wavfile.write("0_" + input_text[-1], rate=sampling_rate, data=audio_values[0, 0].cpu().numpy())
         # scipy.io.wavfile.write("1_" + input_text[-1], rate=sampling_rate, data=audio_values[1, 0].cpu().numpy())
-        scipy.io.wavfile.write(input_text[-1], rate=sampling_rate, data=audio_values[1, 0].cpu().numpy())
+        scipy.io.wavfile.write(input_text[-1], rate=sampling_rate, data=audio_values)
