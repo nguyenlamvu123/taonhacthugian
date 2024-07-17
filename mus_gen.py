@@ -1,8 +1,9 @@
-from transformers import AutoProcessor, MusicgenForConditionalGeneration
-import os, scipy
+import scipy
+from coordinate_constant import (
+    sample_length2num_tokens,
+    processor, device, model, g_scale, debug, sampling_rate, sample_length,
+)
 
-pret_loca = os.path.join(os.path.dirname(__file__), 'pret')
-num_tokens = 1503  # 256
 
 def configgg(model):
     model.generation_config.guidance_scale = 4.0
@@ -10,41 +11,43 @@ def configgg(model):
     return model
 
 
-# site: https://huggingface.co/docs/transformers/main/en/model_doc/musicgen
-pretra: tuple = (
-    "facebook/musicgen-small",  # 300M model, text to music only - 🤗 Hub
-    "facebook/musicgen-medium",  # 1.5B model, text to music only - 🤗 Hub
-    "facebook/musicgen-melody",  # 1.5B model, text to music and text+melody to music - 🤗 Hub
-    "facebook/musicgen-large",  # 3.3B model, text to music only - 🤗 Hub
-    "facebook/musicgen-melody-large",  # 3.3B model, text to music and text+melody to music - 🤗 Hub
-    "facebook/musicgen-stereo-*:",  # or all in one
-)
-processor = AutoProcessor.from_pretrained(pretra[0], cache_dir=pret_loca)
-model = MusicgenForConditionalGeneration.from_pretrained(pretra[0], cache_dir=pret_loca)
-# model = configgg(model)
+def Py_Transformer_uncondition(num_tokens=256):
+    unconditional_inputs = model.get_unconditional_inputs(num_samples=1)
+    audio_values = model.generate(**unconditional_inputs, do_sample=True, max_new_tokens=num_tokens)
+    return audio_values
 
-unconditional_inputs = model.get_unconditional_inputs(num_samples=1)
-audio_values = model.generate(**unconditional_inputs, do_sample=True, max_new_tokens=256)
-for input_text in (
-        (["epic movie theme", "sad jazz", ], "emtsj.wav"),
-        (["80s pop track with bassy drums and synth", "90s rock song with loud guitars and heavy drums", ], "80spt_90srs.wav"),
-        (["80s blues track with groovy saxophone"], "80sbt.wav"),
-):
+
+def Py_Transformer(input_text, g_scale=3, **kwargs):
+    num_tokens = sample_length2num_tokens(kwargs['thoigian'])
     inputs = processor(
-        text=input_text[0],
+        text=input_text,
         padding=True,
         return_tensors="pt",
-    )
-    
+    ).to(device)
     audio_values = model.generate(
         **inputs,
-        max_new_tokens=num_tokens,
-        guidance_scale=3,  # The guidance_scale is used in classifier free guidance...Higher guidance scale encourages the model to generate samples that are more closely linked to the input prompt
-        do_sample=True,  # sampling leads to significantly better results than greedy (do_sample=False)
+        max_new_tokens=num_tokens,  # defines the length of the generated music piece
+        guidance_scale=g_scale,  # controls the creativity level  # The guidance_scale is used in classifier free guidance...Higher guidance scale encourages the model to generate samples that are more closely linked to the input prompt
+        do_sample=True,  # enables stochastic sampling, making the generation process more creative  # sampling leads to significantly better results than greedy (do_sample=False)
     )
-    print('###################', audio_values.shape)
+    # https://blog.unrealspeech.com/deploying-musicgen-with-custom-inference-endpoints-a-comprehensive-guide/
+    return audio_values
 
-    sampling_rate = model.config.audio_encoder.sampling_rate
-    # scipy.io.wavfile.write("0_" + input_text[-1], rate=sampling_rate, data=audio_values[0].cpu())
-    # scipy.io.wavfile.write("1_" + input_text[-1], rate=sampling_rate, data=audio_values[1].cpu())  #
-    scipy.io.wavfile.write(input_text[-1], rate=sampling_rate, data=audio_values[0, 0].numpy())
+
+if __name__ == '__main__':
+    for input_text in (
+            (["epic movie theme", "sad jazz", ], "emtsj.wav"),
+            # (["80s pop track with bassy drums and synth", "90s rock song with loud guitars and heavy drums", ], "80spt_90srs.wav"),
+            # (["80s blues track with groovy saxophone"], "80sbt.wav"),
+            # (["A serene and peaceful piano piece", ], "sapp.wav", ),
+    ):
+        audio_values = Py_Transformer(
+            input_text=input_text[0], g_scale=g_scale, thoigian=30
+        )
+        if debug:
+            print('###################', audio_values.shape)  # it will be `torch.Size([n, 1, 960000])` with n=len(input_text[0])
+            # with `torch.Size([1, 1, 960000])`, `audio_values[1, 0].cpu().numpy()` will cause IndexError
+
+        # scipy.io.wavfile.write("0_" + input_text[-1], rate=sampling_rate, data=audio_values[0, 0].cpu().numpy())
+        # scipy.io.wavfile.write("1_" + input_text[-1], rate=sampling_rate, data=audio_values[1, 0].cpu().numpy())
+        scipy.io.wavfile.write(input_text[-1], rate=sampling_rate, data=audio_values[1, 0].cpu().numpy())
