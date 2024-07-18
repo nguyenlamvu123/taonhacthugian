@@ -128,7 +128,7 @@ def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None):
         return
     placeholder = st.empty()
     data = readfile(file=out___mp4_, mod="rb")
-    st.audio(out___mp4_)
+    st.audio(audio_values, sample_rate=sampling_rate)
     b64 = base64.b64encode(data).decode()
     readfile(file=historyfile, mod="a", cont=f'previous time\n{b64}\n')  # ghi lại lịch sử dưới dạng base64 vào file trên local
     with placeholder.container():
