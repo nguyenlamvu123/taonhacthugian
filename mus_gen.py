@@ -1,7 +1,7 @@
 import scipy
 from coordinate_constant import (
-    timer, apply_nltk, sample_length2num_tokens,
-    processor, device, model, g_scale, debug, sampling_rate, sample_length,
+    timer, apply_nltk, sample_length2num_tokens, readfile,
+    processor, device, model, g_scale, debug, sampling_rate, sample_length, historyfile,
 )
 
 
