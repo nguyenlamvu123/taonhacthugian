@@ -1,6 +1,6 @@
 import scipy
 from coordinate_constant import (
-    apply_nltk, sample_length2num_tokens,
+    timer, apply_nltk, sample_length2num_tokens,
     processor, device, model, g_scale, debug, sampling_rate, sample_length,
 )
 
@@ -12,6 +12,7 @@ def configgg(model):
 
 
 @apply_nltk
+@timer
 def Py_Transformer_uncondition(num_tokens=256):
     unconditional_inputs = model.get_unconditional_inputs(num_samples=1)
     audio_values = model.generate(**unconditional_inputs, do_sample=True, max_new_tokens=num_tokens)
@@ -19,6 +20,7 @@ def Py_Transformer_uncondition(num_tokens=256):
 
 
 @apply_nltk
+@timer
 def Py_Transformer(input_text, g_scale=3, **kwargs):
     num_tokens = sample_length2num_tokens(kwargs['thoigian'])
     inputs = processor(
@@ -53,3 +55,4 @@ if __name__ == '__main__':
         # scipy.io.wavfile.write("0_" + input_text[-1], rate=sampling_rate, data=audio_values[0, 0].cpu().numpy())
         # scipy.io.wavfile.write("1_" + input_text[-1], rate=sampling_rate, data=audio_values[1, 0].cpu().numpy())
         scipy.io.wavfile.write(input_text[-1], rate=sampling_rate, data=audio_values)
+    # python3 manage.py runserver 0.0.0.0:8501

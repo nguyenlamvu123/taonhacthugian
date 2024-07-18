@@ -1,7 +1,19 @@
 from transformers import AutoProcessor, MusicgenForConditionalGeneration
-import os, torch, scipy
+import os, torch, scipy, time
 from functools import wraps
 import numpy as np
+
+
+def timer(func):  # @timer
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        if debug:
+            print(f"Execution time of {func.__name__}: {end - start} seconds")
+        return result
+    return wrapper
 
 
 def sample_length2num_tokens(sample_length=30):
@@ -38,7 +50,7 @@ pret_loca = os.path.join(os.path.dirname(__file__), 'pret')
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 sample_length = 30  # seconds
 g_scale = 5
-debug = True
+debug = False
 
 # site: https://huggingface.co/docs/transformers/main/en/model_doc/musicgen
 pretra: tuple = (
