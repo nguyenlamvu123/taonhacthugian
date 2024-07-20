@@ -1,7 +1,7 @@
 import base64, os, scipy
 import streamlit as st
 
-from mus_gen import Py_Transformer, readfile, sampling_rate, historyfile, timer
+from mus_gen import Py_Transformer, Py_Audiocraft, readfile, sampling_rate, historyfile, timer
 
 
 def main_loop_strl():
@@ -101,6 +101,11 @@ def main_loop_strl():
     with col1:
         descri1 = st.text_input("descri1", None)
         with st.form("checkboxes", clear_on_submit=True):
+            option = st.selectbox(
+                "How would you like to be contacted?",
+                ("Py_Transformer", "Py_Audiocraft",),
+                index=0,
+            )
             g_scale = st.slider(
                 "To be used in classifier free guidance (CFG), setting the weighting between the conditional logits (which are predicted from the text prompts) and the unconditional logits (which are predicted from an unconditional or ‘null’ prompt). Higher guidance scale encourages the model to generate samples that are more closely linked to the input prompt, usually at the expense of poorer audio quality. CFG is enabled by setting guidance_scale > 1",
                 min_value=0,
@@ -117,21 +122,25 @@ def main_loop_strl():
     descri = list()
     for s in (descri1, descri2, descri3, ):
         if s is not None: descri += [s]
-    main_loop(descri, g_scale, thoigian, None)
+    pytran = True if option == "Py_Transformer" else "Py_Audiocraft"
+    placeholder = st.empty()
+    with placeholder.container():
+        main_loop(descri, g_scale, thoigian, None, pytran)
 
 
-def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None):
-    audio_values = Py_Transformer(input_text=descri, g_scale=int(g_scale), thoigian=int(thoigian))
-    out___mp4_ = os.path.join(os.path.dirname(__file__), "musicgen_out.wav") if outlocat is None else outlocat
-    scipy.io.wavfile.write(out___mp4_, rate=sampling_rate, data=audio_values)
+def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None, pytran: bool = True):
+    """TODO mark files writen by using datetime instead of using listfilenames (https://www.freecodecamp.org/news/strftime-in-python/) (https://strftime.org/)"""
+    if pytran:
+        gener = Py_Transformer(input_text=descri, g_scale=int(g_scale), thoigian=int(thoigian), outlocat=outlocat)
+    else:
+        Py_Audiocraft(descri, thoigian=int(thoigian), outlocat=outlocat)  # -> 0.wav, 1.wav, 2.wav
     if outlocat is not None:
         return
-    placeholder = st.empty()
-    data = readfile(file=out___mp4_, mod="rb")
-    st.audio(audio_values, sample_rate=sampling_rate)
-    b64 = base64.b64encode(data).decode()
-    readfile(file=historyfile, mod="a", cont=f'previous time\n{b64}\n')  # ghi lại lịch sử dưới dạng base64 vào file trên local
-    with placeholder.container():
+    for out___mp4_, audio_values in gener:
+        data = readfile(file=out___mp4_, mod="rb")
+        st.audio(audio_values, sample_rate=sampling_rate)
+        b64 = base64.b64encode(data).decode()
+        readfile(file=historyfile, mod="a", cont=f'previous time\n{b64}\n')  # ghi lại lịch sử dưới dạng base64 vào file trên local
         for de in descri:
             st.write(de)
         st.download_button(
