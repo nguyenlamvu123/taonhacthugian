@@ -38,11 +38,10 @@ def Py_Transformer(input_text, g_scale=3, **kwargs):
     return audio_values
 
 
-# @apply_nltk
+@apply_nltk
 @timer
 def Py_Audiocraft(input_text, **kwargs):
     import torchaudio
-    from audiocraft.data.audio import audio_write
 
 
     au_crmode.set_generation_params(duration=kwargs['thoigian'])
@@ -51,10 +50,10 @@ def Py_Audiocraft(input_text, **kwargs):
     # generates using the melody from the given audio and the provided descriptions.
     wav = au_crmode.generate_with_chroma(input_text, melody[None].expand(3, -1, -1), sr)
 
-    for idx, one_wav in enumerate(wav):
-        # Will save under {idx}.wav, with loudness normalization at -14 db LUFS.
-        audio_write(f'{idx}', one_wav.cpu(), au_crmode.sample_rate, strategy="loudness")
-    return
+    # for idx, one_wav in enumerate(wav):
+    #     # Will save under {idx}.wav, with loudness normalization at -14 db LUFS.
+    #     audio_write(f'{idx}', one_wav.cpu(), au_crmode.sample_rate, strategy="loudness")
+    return wav
 
 
 if __name__ == '__main__':
