@@ -49,12 +49,7 @@ def apply_nltk(func):  # @apply_nltk
     def gener_dat(audio_values, met):
         for dat in audio_values:
             for dat_ in dat:
-                if met == "Py_Audiocraft":
-                    yield dat_.cpu()
-                elif met == "Py_Transformer":
                     yield dat_.cpu().numpy()
-                else:
-                    raise('unknown method')
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -68,25 +63,18 @@ def apply_nltk(func):  # @apply_nltk
             thoigian_ = thoigian - sample_length
             if thoigian_ < 0:
                 kwargs['thoigian'] = thoigian
-                audio_values = func(**kwargs)  # model.generate(**inputs.to(device))
+                audio_values = func(**kwargs)
             else:
                 kwargs['thoigian'] = sample_length
-                audio_values = func(**kwargs)  # model.generate(**inputs.to(device))
+                audio_values = func(**kwargs)
             thoigian = thoigian_
 
             sil = silence.copy()
-            if kwargs['met'] == "Py_Audiocraft":
-                sil = torch.from_numpy(sil)
             if len(pieces) == 0:
                 for dat_ in gener_dat(audio_values, kwargs['met']):
                     pieces.append([dat_, sil])
             else:
-                if kwargs['met'] == "Py_Audiocraft":
-                    dat_ = audio_values[0][0].cpu()
-                elif kwargs['met'] == "Py_Transformer":
-                    dat_ = audio_values[0][0].cpu().numpy()
-                else:
-                    raise('unknown method')
+                dat_ = audio_values[0][0].cpu().numpy()
                 # for dat_ in gener_dat(audio_values, kwargs['met'])):  # TODO mutipl origin pieces list
                 for piece in pieces:
                     piece += [dat_, sil]
@@ -94,14 +82,8 @@ def apply_nltk(func):  # @apply_nltk
         for enu, piece in enumerate(pieces):
             out___mp4_ = os.path.join(os.path.dirname(__file__), f"musicgen_out_{enu}.wav") if outlocat is None \
                 else f"{os.path.splitext(outlocat)[0]}_{enu}.wav"
-            if kwargs['met'] == "Py_Audiocraft":
-                data = torch.cat(piece)
-                audio_write(out___mp4_, data, au_crmode.sample_rate, strategy="loudness")
-            elif kwargs['met'] == "Py_Transformer":
-                data = np.concatenate(piece)
-                scipy.io.wavfile.write(out___mp4_, rate=sampling_rate, data=data)
-            else:
-                raise('unknown method')
+            data = np.concatenate(piece)
+            scipy.io.wavfile.write(out___mp4_, rate=sampling_rate, data=data)
             listfilenames.append((out___mp4_, data))
         return listfilenames
     return wrapper
