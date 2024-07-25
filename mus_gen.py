@@ -1,7 +1,7 @@
 import scipy
 from coordinate_constant import (
-    timer, apply_nltk, sample_length2num_tokens,
-    processor, device, model, g_scale, debug, sampling_rate, sample_length,
+    timer, apply_nltk, sample_length2num_tokens, readfile,
+    processor, device, model, au_crmode, g_scale, debug, sampling_rate, sample_length, historyfile,
 )
 
 
@@ -36,6 +36,24 @@ def Py_Transformer(input_text, g_scale=3, **kwargs):
     )
     # https://blog.unrealspeech.com/deploying-musicgen-with-custom-inference-endpoints-a-comprehensive-guide/
     return audio_values
+
+
+@apply_nltk
+@timer
+def Py_Audiocraft(input_text, **kwargs):
+    import torchaudio
+
+
+    au_crmode.set_generation_params(duration=kwargs['thoigian'])
+
+    melody, sr = torchaudio.load('./176_183.wav')
+    # generates using the melody from the given audio and the provided descriptions.
+    wav = au_crmode.generate_with_chroma(input_text, melody[None].expand(3, -1, -1), sr)
+
+    # for idx, one_wav in enumerate(wav):
+    #     # Will save under {idx}.wav, with loudness normalization at -14 db LUFS.
+    #     audio_write(f'{idx}', one_wav.cpu(), au_crmode.sample_rate, strategy="loudness")
+    return wav
 
 
 if __name__ == '__main__':

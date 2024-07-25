@@ -1,9 +1,9 @@
-import scipy, os
+import os
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 
-from mus_gen import Py_Transformer, sampling_rate
+from strlit import main_loop
 
 
 @csrf_exempt
@@ -25,6 +25,5 @@ def validate(request):
       print("descri2: ", descri2)
       print("descri3: ", descri3)
       print("thoigian: ", thoigian)
-      audio_values = Py_Transformer(input_text=descri, g_scale=int(g_scale), thoigian=int(thoigian))
-      scipy.io.wavfile.write(outlocat, rate=sampling_rate, data=audio_values)
+      main_loop(descri, g_scale, thoigian, outlocat)
       return HttpResponse('ok')
