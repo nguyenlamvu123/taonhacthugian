@@ -122,7 +122,7 @@ def main_loop_strl():
     descri = list()
     for s in (descri1, descri2, descri3, ):
         if s is not None: descri += [s]
-    pytran = True if option == "Py_Transformer" else "Py_Audiocraft"
+    pytran = True if option == "Py_Transformer" else False
     placeholder = st.empty()
     with placeholder.container():
         main_loop(descri, g_scale, thoigian, None, pytran)
@@ -130,17 +130,16 @@ def main_loop_strl():
 
 def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None, pytran: bool = True):
     """TODO mark files writen by using datetime instead of using listfilenames (https://www.freecodecamp.org/news/strftime-in-python/) (https://strftime.org/)"""
-    if pytran:
-        gener = Py_Transformer(input_text=descri, g_scale=int(g_scale), thoigian=int(thoigian), outlocat=outlocat)
-    else:
-        Py_Audiocraft(descri, thoigian=int(thoigian), outlocat=outlocat)  # -> 0.wav, 1.wav, 2.wav
+    gener = Py_Transformer(
+        input_text=descri, g_scale=int(g_scale), thoigian=int(thoigian), outlocat=outlocat, met="Py_Transformer"
+    ) if pytran else Py_Audiocraft(
+        input_text=descri, thoigian=int(thoigian), outlocat=outlocat, met="Py_Audiocraft"
+    )
     if outlocat is not None:
         return
     for out___mp4_, audio_values in gener:
         data = readfile(file=out___mp4_, mod="rb")
         st.audio(audio_values, sample_rate=sampling_rate)
-        b64 = base64.b64encode(data).decode()
-        readfile(file=historyfile, mod="a", cont=f'previous time\n{b64}\n')  # ghi lại lịch sử dưới dạng base64 vào file trên local
         for de in descri:
             st.write(de)
         st.download_button(
