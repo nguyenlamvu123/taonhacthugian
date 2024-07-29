@@ -1,5 +1,6 @@
-git+https://github.com/huggingface/transformers.git
-scipy
-django
-streamlit
-git+https://github.com/facebookresearch/audiocraft.git
+# git+https://github.com/huggingface/transformers.git
+# scipy
+# django
+# streamlit
+# git+https://github.com/facebookresearch/audiocraft.git
+musiclm-pytorch
