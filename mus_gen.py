@@ -40,13 +40,14 @@ def Py_Transformer(input_text, g_scale=3, **kwargs):
 
 @apply_nltk
 @timer
-def Py_Audiocraft(input_text, **kwargs):
+def Py_Audiocraft(input_text, sameaud='./176_183.wav', **kwargs):
+    # https://huggingface.co/spaces/Surn/UnlimitedMusicGen/blob/main/README.md
     import torchaudio
-
+    # from audiocraft.data.audio import audio_write
 
     au_crmode.set_generation_params(duration=kwargs['thoigian'])
 
-    melody, sr = torchaudio.load('./176_183.wav')
+    melody, sr = torchaudio.load(sameaud)
     # generates using the melody from the given audio and the provided descriptions.
     wav = au_crmode.generate_with_chroma(input_text, melody[None].expand(3, -1, -1), sr)
 

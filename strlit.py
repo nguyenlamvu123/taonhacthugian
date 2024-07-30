@@ -1,4 +1,5 @@
 import base64, os, scipy
+from io import StringIO
 import streamlit as st
 
 from mus_gen import Py_Transformer, Py_Audiocraft, readfile, sampling_rate, historyfile, timer
@@ -74,7 +75,8 @@ def main_loop_strl():
             max_value=300,
             value=8
         )
-        return thoigian, descri2
+        uploaded_file = st.file_uploader("Choose a file")
+        return thoigian, descri2, uploaded_file
 
     @timer
     def showdata_col3():
@@ -97,15 +99,12 @@ def main_loop_strl():
 
     with col3:
         descri3 = showdata_col3()
-
-    with col1:
-        descri1 = st.text_input("descri1", None)
         with st.form("checkboxes", clear_on_submit=True):
-            option = st.selectbox(
-                "How would you like to be contacted?",
-                ("Py_Transformer", "Py_Audiocraft",),
-                index=0,
-            )
+            # option = st.selectbox(
+            #     "How would you like to be contacted?",
+            #     ("Py_Transformer", "Py_Audiocraft",),
+            #     index=0,
+            # )
             g_scale = st.slider(
                 "To be used in classifier free guidance (CFG), setting the weighting between the conditional logits (which are predicted from the text prompts) and the unconditional logits (which are predicted from an unconditional or ‘null’ prompt). Higher guidance scale encourages the model to generate samples that are more closely linked to the input prompt, usually at the expense of poorer audio quality. CFG is enabled by setting guidance_scale > 1",
                 min_value=0,
@@ -114,26 +113,35 @@ def main_loop_strl():
             )
             submit = st.form_submit_button('Chạy!')  # https://blog.streamlit.io/introducing-submit-button-and-forms/
 
+    with col1:
+        descri1 = st.text_input("descri1", None)
+
     with col2:
-        thoigian, descri2 = showdata_col2()
+        thoigian, descri2, uploaded_file = showdata_col2()
 
     if not submit:
         return None
     descri = list()
     for s in (descri1, descri2, descri3, ):
         if s is not None: descri += [s]
-    pytran = True if option == "Py_Transformer" else False
+    pytran = False  # pytran = True if option == "Py_Transformer" else False
     placeholder = st.empty()
     with placeholder.container():
-        main_loop(descri, g_scale, thoigian, None, pytran)
+        main_loop(descri, g_scale, thoigian, None, pytran, uploaded_file)
 
 
-def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None, pytran: bool = True):
+def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None, pytran: bool = True, uploaded_file=None):
     """TODO mark files writen by using datetime instead of using listfilenames (https://www.freecodecamp.org/news/strftime-in-python/) (https://strftime.org/)"""
+    if uploaded_file is not None:
+        cont = uploaded_file.getbuffer()
+        readfile(file=f'temp{os.path.splitext(uploaded_file.name)[-1]}', mod="wb", cont=cont)
+        sameaud = f'temp{os.path.splitext(uploaded_file.name)[-1]}'
+    else:
+        sameaud = 'temp.wav'
     gener = Py_Transformer(
         input_text=descri, g_scale=int(g_scale), thoigian=int(thoigian), outlocat=outlocat, met="Py_Transformer"
     ) if pytran else Py_Audiocraft(
-        input_text=descri, thoigian=int(thoigian), outlocat=outlocat, met="Py_Audiocraft"
+        input_text=descri, sameaud=sameaud,thoigian=int(thoigian), outlocat=outlocat, met="Py_Audiocraft"
     )
     if outlocat is not None:
         return

@@ -18,7 +18,7 @@ def timer(func):  # @timer
 
 
 def readfile(file="uid.txt", mod="r", cont=None, jso: bool = False):
-    if not mod in ("w", "a", ):
+    if not mod in ("w", "wb", "a", ):
         assert os.path.isfile(file), str(file)
     if mod == "r":
         with open(file, encoding="utf-8") as file:
@@ -38,6 +38,10 @@ def readfile(file="uid.txt", mod="r", cont=None, jso: bool = False):
                 fil_e.write(cont)
             else:
                 json.dump(cont, fil_e, indent=2, ensure_ascii=False)
+    else:
+        assert mod == "wb"
+        with open(file, mod) as fil_e:
+            fil_e.write(cont)
 
 
 def sample_length2num_tokens(sample_length=30):
@@ -46,10 +50,10 @@ def sample_length2num_tokens(sample_length=30):
 
 
 def apply_nltk(func):  # @apply_nltk
-    def gener_dat(audio_values, met):
+    def gener_dat(audio_values):
         for dat in audio_values:
             for dat_ in dat:
-                    yield dat_.cpu().numpy()
+                yield dat_.cpu().numpy()
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -71,7 +75,7 @@ def apply_nltk(func):  # @apply_nltk
 
             sil = silence.copy()
             if len(pieces) == 0:
-                for dat_ in gener_dat(audio_values, kwargs['met']):
+                for dat_ in gener_dat(audio_values):
                     pieces.append([dat_, sil])
             else:
                 dat_ = audio_values[0][0].cpu().numpy()
