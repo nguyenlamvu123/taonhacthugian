@@ -1,4 +1,5 @@
 import gradio as st
+import argparse
 from strlit import main_loop, sampling_rate
 
 
@@ -34,6 +35,24 @@ def showdata_col3():
 
 outmp4list = list()
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '--listen',
+        type=str,
+        default='0.0.0.0',
+        help='IP to listen on for connections to Gradio',
+    )
+    parser.add_argument(
+        '--server_port',
+        type=int,
+        default='8501',
+        help='Port to run the server listener on',
+    )
+    args = parser.parse_args()
+    server_port = args.server_port
+    server_name = args.listen
+
     # pytran = False  # pytran = True if option == "Py_Transformer" else False
     with st.Blocks() as demo:
         with st.Row():
@@ -68,4 +87,4 @@ if __name__ == '__main__':
             outputs=[outmp4_1, outmp4_2, outmp4_3, ],
             api_name="greet"
         )
-    demo.launch()
+    demo.launch(server_port=server_port, server_name=server_name)
