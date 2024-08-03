@@ -3,3 +3,4 @@ scipy
 django
 streamlit
 git+https://github.com/facebookresearch/audiocraft.git
+gradio

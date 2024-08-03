@@ -1,5 +1,4 @@
-import base64, os, scipy
-from io import StringIO
+import os
 import streamlit as st
 
 from mus_gen import Py_Transformer, Py_Audiocraft, readfile, sampling_rate, historyfile, timer
@@ -111,7 +110,7 @@ def main_loop_strl():
                 max_value=20,
                 value=3
             )
-            submit = st.form_submit_button('Chạy!')  # https://blog.streamlit.io/introducing-submit-button-and-forms/
+            submit = st.form_submit_button("Run!")  # https://blog.streamlit.io/introducing-submit-button-and-forms/
 
     with col1:
         descri1 = st.text_input("descri1", None)
@@ -130,12 +129,38 @@ def main_loop_strl():
         main_loop(descri, g_scale, thoigian, None, pytran, uploaded_file)
 
 
+def streamlit_audio(out___mp4_, audio_values, descri):
+    data = readfile(file=out___mp4_, mod="rb")
+    st.audio(audio_values, sample_rate=sampling_rate)
+    for de in descri:
+        st.write(de)
+    st.download_button(
+        label="Download",
+        data=data,
+        file_name=out___mp4_,
+        mime='wav',
+    )
+
+
 def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None, pytran: bool = True, uploaded_file=None):
+    """
+    :param descri:
+    :param g_scale:
+    :param thoigian:
+    :param outlocat: '___' when method is called from gradio, or None when method is called from streamlit
+    :param pytran:
+    :param uploaded_file:
+    :return:
+    """
     """TODO mark files writen by using datetime instead of using listfilenames (https://www.freecodecamp.org/news/strftime-in-python/) (https://strftime.org/)"""
     if uploaded_file is not None:
-        cont = uploaded_file.getbuffer()
-        readfile(file=f'temp{os.path.splitext(uploaded_file.name)[-1]}', mod="wb", cont=cont)
+        if outlocat is None:  # method is called from streamlit
+            cont = uploaded_file.getbuffer()
+        else:  # method is called from gradio
+            assert outlocat == '___'  # method is called from gradio
+            cont = readfile(file=uploaded_file, mod="rb")  # name = Path(uploaded_file).name
         sameaud = f'temp{os.path.splitext(uploaded_file.name)[-1]}'
+        readfile(file=sameaud, mod="wb", cont=cont)
     else:
         sameaud = 'temp.wav'
     gener = Py_Transformer(
@@ -143,19 +168,13 @@ def main_loop(descri: list, g_scale, thoigian, outlocat: str or None = None, pyt
     ) if pytran else Py_Audiocraft(
         input_text=descri, sameaud=sameaud,thoigian=int(thoigian), outlocat=outlocat, met="Py_Audiocraft"
     )
-    if outlocat is not None:
-        return
     for out___mp4_, audio_values in gener:
-        data = readfile(file=out___mp4_, mod="rb")
-        st.audio(audio_values, sample_rate=sampling_rate)
-        for de in descri:
-            st.write(de)
-        st.download_button(
-            label="Download",
-            data=data,
-            file_name=out___mp4_,
-            mime='wav',
-        )
+        if outlocat == '___':  # method is called from gradio
+            yield out___mp4_, audio_values, descri
+        elif outlocat is not None:  # method is called from request
+            yield '_'  # TODO
+        else:  # method is called from streamlit
+            yield streamlit_audio(out___mp4_, audio_values, descri)
 
 
 if __name__ == '__main__':
