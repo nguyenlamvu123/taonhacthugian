@@ -66,9 +66,13 @@ def apply_nltk(func):  # @apply_nltk
         while thoigian > 0:
             thoigian_ = thoigian - sample_length
             if thoigian_ < 0:
+                if debug:
+                    print('@@@', thoigian_)
                 kwargs['thoigian'] = thoigian
                 audio_values = func(**kwargs)
             else:
+                if debug:
+                    print('$$$', thoigian_)
                 kwargs['thoigian'] = sample_length
                 audio_values = func(**kwargs)
             thoigian = thoigian_
@@ -82,6 +86,8 @@ def apply_nltk(func):  # @apply_nltk
                 # for dat_ in gener_dat(audio_values, kwargs['met'])):  # TODO mutipl origin pieces list
                 for piece in pieces:
                     piece += [dat_, sil]
+        if debug:
+            print('*** len(pieces):', len(pieces))
         listfilenames = list()
         for enu, piece in enumerate(pieces):
             out___mp4_ = os.path.join(os.path.dirname(__file__), f"musicgen_out_{enu}.wav") if outlocat is None \
@@ -97,7 +103,7 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 sample_length = 30  # seconds
 g_scale = 5
 historyfile: str = "hist.txt"
-debug = False
+debug = True
 
 # site: https://huggingface.co/docs/transformers/main/en/model_doc/musicgen
 pretra: tuple = (
@@ -109,7 +115,7 @@ pretra: tuple = (
     "facebook/musicgen-stereo-*",  # or all in one
 )
 
-def aucr_model(pre='melody'):
+def aucr_model(pre=pretra[2]):
     from audiocraft.models import MusicGen
     return MusicGen.get_pretrained(pre, cache_dir=pret_loca)
 

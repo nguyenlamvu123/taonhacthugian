@@ -4,20 +4,24 @@ from strlit import main_loop, sampling_rate
 
 
 def main_loop_strl(descri1, descri2, descri3, g_scale, thoigian, uploaded_file):
-    global outmp4list
+    outmp4list = list()
+
     descri = list()
     for s in (descri1, descri2, descri3, ):
         if s is not None: descri += [s]
     for out___mp4_, audio_values, descri in main_loop(descri, g_scale, thoigian, "___", False, uploaded_file):
         outmp4 = st.Audio(value=(sampling_rate, audio_values, ), label=descri, visible=True)
         outmp4list.append(outmp4)
-    return outmp4list
+    return outmp4list + [st.Textbox(value="Done!")]
 
 def showdata_col1():
     descri1 = st.Textbox(label="descri1")
     return descri1
 
 def showdata_col2():
+    def upload_file(files):
+        return files
+
     descri2 = st.Textbox(label="descri2")
     thoigian = st.Slider(
         5, 300,
@@ -25,15 +29,16 @@ def showdata_col2():
         label="Time to generate music",
         value=8,
     )
-    uploaded_file = st.UploadButton("Choose a file", file_types=["audio"])
-    return thoigian, descri2, uploaded_file
+    file_output = st.File()
+    upload_button = st.UploadButton("Choose a file", file_types=["audio"])
+    upload_button.upload(upload_file, upload_button, file_output)
+    return thoigian, descri2, upload_button
 
 def showdata_col3():
     descri3 = st.Textbox(label="descri3")
     return descri3
 
 
-outmp4list = list()
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -72,6 +77,7 @@ if __name__ == '__main__':
             outmp4_1 = st.Audio(visible=False)
             outmp4_2 = st.Audio(visible=False)
             outmp4_3 = st.Audio(visible=False)
+            status = st.Textbox(value="Ready!")
         greet_btn = st.Button("Run!")
         greet_btn.click(
             fn=main_loop_strl,
@@ -84,7 +90,7 @@ if __name__ == '__main__':
                 # pytran,
                 uploaded_file,
             ],
-            outputs=[outmp4_1, outmp4_2, outmp4_3, ],
+            outputs=[outmp4_1, outmp4_2, outmp4_3, status, ],
             api_name="greet"
         )
     demo.launch(server_port=server_port, server_name=server_name)
